@@ -1,13 +1,15 @@
 from scene import *
-from random import uniform, random
+from random import choice
+from dict import dict
 import sound
 
 class Letter(LabelNode):
 	def __init__(self,**kwargs):
 		LabelNode.__init__(self,**kwargs)
 		
-	def is_touched(self,bound,x,y):
-		#determine if a letter has been touched		
+	def is_touched(self,x,y):
+		#determine if a letter has been touched
+		bound = self.font[1] / 2
 		left_bound = self.position.x - bound
 		right_bound = self.position.x + bound
 		upper_bound = self.position.y + bound
@@ -19,49 +21,68 @@ class Letter(LabelNode):
 class Man(ShapeNode):
 	def __init__(self,**kwargs):
 		ShapeNode.__init__(self,**kwargs)
+		#possibly make body part sizes functions of man_space...
 		self.width = 7
 		#build head
 		head_shape = ui.Path.oval(0,0,100,100)
 		head_shape.line_width = self.width
-		head = ShapeNode(head_shape,fill_color='clear',stroke_color='white',parent=self,position=(0,150))
+		headY = self.size.h/2
+		head = ShapeNode(head_shape,fill_color='clear',stroke_color='white',parent=self,position=(0,headY))
+		head.anchor_point = (0.5,1)
 		#build body
 		body_shape = ui.Path.rect(0,0,self.width,200)
-		body = ShapeNode(body_shape,fill_color='white',stroke_color='clear',parent=self,position=(0,100))
+		bodyY = headY - 100
+		body = ShapeNode(body_shape,fill_color='white',stroke_color='clear',parent=self,position=(0,bodyY))
 		body.anchor_point = (0.5,1)
 		#build arms
-		left_arm_shape = self.make_limb(-50,100)
-		left_arm = ShapeNode(left_arm_shape,stroke_color='white',parent=self,position=(0,50))
-		left_arm.anchor_point = (1,1)
-		right_arm_shape = self.make_limb(50,100)
-		right_arm = ShapeNode(right_arm_shape,stroke_color='white',parent=self,position=(0,50))
-		right_arm.anchor_point = (-1,1)
+		armY = bodyY - 50
+		left_arm = self.make_limb(0,armY,-50,100)
+		right_arm = self.make_limb(0,armY,50,100)
 		#build legs
-		left_leg_shape = self.make_limb(-50,150)
-		left_leg = ShapeNode(left_leg_shape,stroke_color='white',parent=self,position=(0,-95))
-		left_leg.anchor_point = (1,1)
-		right_leg_shape = self.make_limb(50,150)
-		right_leg = ShapeNode(right_leg_shape,stroke_color='white',parent=self,position=(0,-95))
-		right_leg.anchor_point = (-1,1)
+		legY = headY - 295
+		left_leg = self.make_limb(0,legY,-50,150)
+		right_leg = self.make_limb(0,legY,50,150)
+		#setup lives system...
 		
-	def make_limb(self,endX,endY):
-		limb = ui.Path()
-		limb.line_width = self.width
-		limb.move_to(0,0)
-		limb.line_to(endX,endY)
-		limb.close()
+	def make_limb(self,x,y,changeX,changeY):
+		#set anchor point in the top left or top right corner
+		anchorX = -1
+		if changeX < 0:
+			anchorX = 1
+		#draw limb
+		limb_shape = ui.Path()
+		limb_shape.line_width = self.width
+		limb_shape.move_to(0,0)
+		limb_shape.line_to(changeX,changeY)
+		limb_shape.close()
+		#make shape node and add anchor point
+		limb = ShapeNode(limb_shape,stroke_color='white',parent=self,position=(x,y))
+		limb.anchor_point = (anchorX,1)
 		return limb
 
 class Hangman(Scene):
 	
 	def setup(self):
+		#font
 		self.font_family = 'Helvetica'
 		self.font_size = 40
+		#setup background
 		self.background_color = "#208041"
-		self.background = Node(parent=self)
+		#place letters
 		self.letters = []
 		self.place_letters()
+		#place man
 		man_space = ui.Path.rect(0,0,150,450)
-		self.man = Man(path=man_space,fill_color='clear',stroke_color='white',parent=self,position=(self.size.w/2,self.size.h/2))
+		self.man = Man(path=man_space,fill_color='clear',parent=self,position=(self.size.w/2,self.size.h/2))
+		#place noose...
+		#choose a random word and fill the answer with blanks
+		dict_array = dict.split('\n')
+		self.word = choice(dict_array)
+		blanks = ""
+		for letter in self.word:
+			blanks += "_ "
+		blanks = blanks[:-1]
+		self.answer = LabelNode(blanks,font=(self.font_family,self.font_size),position=(self.size.w/2,200),parent=self)
 		
 	def place_letters(self):
 		#place all of the letters in the alphabet
@@ -72,17 +93,29 @@ class Hangman(Scene):
 			available_space = self.size.w - margin 
 			gap = available_space / len(keyspace)
 			x = margin + gap*i
-			letter = Letter(text=char, font=(self.font_family,self.font_size), position=(x,y))
+			letter = Letter(text=char, font=(self.font_family,self.font_size),position=(x,y),parent=self)
 			self.letters.append(letter)
-			self.background.add_child(letter)
 			
 	def touch_began(self, touch):
 		#listen for touch events on letters
 		#if any of the letters are touched, replace them with a dot
 		for let in self.letters:
-			if let.is_touched(self.font_size / 2,touch.location.x,touch.location.y):
+			if let.is_touched(touch.location.x,touch.location.y):
+				self.guess_letter(let.text)
 				self.letters.remove(let)
 				let.run_action(Action.remove())
 				temp = SpriteNode('plf:LaserPurpleDot',position=let.position,parent=self)
-		
+				
+	def replace_character(self,string,new_string,index):
+		if index not in range(len(string)):
+			raise ValueError("index outside given string")
+		else:
+			return string[:index] + new_string + string[index+1:]
+				
+	def guess_letter(self,let):
+		index = self.word.find(let)
+		if index > -1:
+			blanks = self.replace_character(self.answer.text,let,2*index)
+			self.answer.text = blanks
+			
 run(Hangman())
