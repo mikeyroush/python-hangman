@@ -110,7 +110,7 @@ class Hangman(Scene):
 	def touch_began(self, touch):
 		#listen for touch events on letters
 		#if any of the letters are touched, replace them with a dot
-		if self.man.incorrect_guesses < 6:
+		if self.game_state.text == "":
 			for let in self.letters:
 				if let.is_touched(touch.location.x,touch.location.y):
 					self.guess_letter(let.text)
