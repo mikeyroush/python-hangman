@@ -15,6 +15,12 @@ These instructions will get you a copy of the project up and running on your loc
 Fork the repository then clone it into working copy. Then, open the external folder in Pythonista.
 Finally, press the play button to play the game
 
+Examples
+
+![hangman loss](Images/lose.png)
+
+![hangman win](Images/win.png)
+
 ## Authors
 
 * **Michael Roush** - *Project completion*
