@@ -93,6 +93,7 @@ class Hangman(Scene):
 			blanks += "_ "
 		blanks = blanks[:-1]
 		self.answer = LabelNode(blanks,font=(self.font_family,self.font_size),position=(self.size.w/2,200),parent=self)
+		self.game_state = LabelNode("",font=(self.font_family,self.font_size),position=(self.size.w/2,100),parent=self)
 		
 	def place_letters(self):
 		#place all of the letters in the alphabet
@@ -134,6 +135,14 @@ class Hangman(Scene):
 				blanks = self.replace_character(self.answer.text,let,2*index)
 				self.answer.text = blanks
 		if not found:
-			self.man.add_part()		
+			self.man.add_part()	
+		#after the guess, check the state of the game
+		self.check_state()
+			
+	def check_state(self):
+		if self.man.incorrect_guesses > 5:
+			self.game_state.text = f'Game Over: the words was {self.word}'
+		if self.answer.text.find('_') < 0:
+			self.game_state.text = 'Nice!'
 			
 run(Hangman())
