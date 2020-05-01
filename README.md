@@ -17,9 +17,9 @@ Finally, press the play button to play the game
 
 Examples
 
-![hangman loss](Images/lose.png)
+![hangman loss](Images/lose.PNG)
 
-![hangman win](Images/win.png)
+![hangman win](Images/win.PNG)
 
 ## Authors
 
