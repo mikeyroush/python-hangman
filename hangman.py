@@ -113,6 +113,7 @@ class Hangman(Scene):
 		if self.game_state.text == "":
 			for let in self.letters:
 				if let.is_touched(touch.location.x,touch.location.y):
+					click = sound.play_effect('ui:click5',pitch=0.5)
 					self.guess_letter(let.text)
 					self.letters.remove(let)
 					let.run_action(Action.remove())
@@ -141,8 +142,10 @@ class Hangman(Scene):
 			
 	def check_state(self):
 		if self.man.incorrect_guesses > 5:
+			sound.play_effect('arcade:Explosion_1')
 			self.game_state.text = f'Game Over: the words was {self.word}'
 		if self.answer.text.find('_') < 0:
+			sound.play_effect('arcade:Powerup_1')
 			self.game_state.text = 'Nice!'
 			
 run(Hangman())
