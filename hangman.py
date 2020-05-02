@@ -143,7 +143,7 @@ class Hangman(Scene):
 	def check_state(self):
 		if self.man.incorrect_guesses > 5:
 			sound.play_effect('arcade:Explosion_1')
-			self.game_state.text = f'Game Over: the words was {self.word}'
+			self.game_state.text = f'Game Over: the word was {self.word}'
 		if self.answer.text.find('_') < 0:
 			sound.play_effect('arcade:Powerup_1')
 			self.game_state.text = 'Nice!'
